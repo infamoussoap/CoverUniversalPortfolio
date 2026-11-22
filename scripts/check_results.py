@@ -23,7 +23,7 @@ CASES = {
                     ('exact_sets_all', 'dataset S_size'),
                     ('finol_nyse_empty_set_control', 'dataset S_size method')),
     'inference': (('5a_summary', 'market'), ('5a_null_summary', 'market'),
-                  ('5a_power_summary', 'g horizon'),
+                  ('5a_power_summary', 'g horizon'), ('5a_winner', 'ticker'),
                   ('5a_subset_summary', 'group d')),
 }
 FIGURES = {'examples': ('aapl_msft_pair_series.pdf', 'fig2_50stock.pdf'),

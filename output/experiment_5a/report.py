@@ -1,7 +1,7 @@
 """Tabulate predeclared tests and draw the associated figures."""
 
 import argparse
-from math import lgamma
+from math import factorial
 
 from flint import arb, ctx
 import numpy as np
@@ -10,12 +10,12 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FixedLocator, FuncFormatter
-from scipy.optimize import brentq, minimize
+from scipy.optimize import minimize
 from scipy.stats import binomtest
 from threadpoolctl import threadpool_limits
 
 from market import CACHE, NAMES, ROOT, TICKERS, random_market, tape
-from particle_universal.interval_cover import outward_float
+from particle_universal.interval_cover import moment_bounds, outward_float
 from particle_universal.tilted_interval_cover import TiltedCover
 
 
@@ -44,22 +44,18 @@ def vertex_check(raw):
     ctx.prec = 128
     best = np.log(raw).sum(axis=0).argmax()
     columns = [j for j in range(raw.shape[1]) if j != best]
-    totals = [arb(0) for _ in columns]
+    costs = [arb(0) for _ in range(raw.shape[1])]
 
     for row in raw:
         denom = arb(float(row[best]))
-        for i, j in enumerate(columns):
-            totals[i] += arb(float(row[j])) / denom - 1
+        for j in columns:
+            costs[j] += 1 - arb(float(row[j])) / denom
 
-    high = max(v.upper() for v in totals)
-    return bool(high < 0), int(best), float(high / len(raw))
-
-
-def vertex_log_evidence(x, d):
-    return x - (d - 1) * np.log(x) + lgamma(d)
+    min_cost = min(costs[j].lower() for j in columns)
+    return bool(min_cost > 0), int(best), costs
 
 
-def winner_checkpoint(raw, best):
+def winner_checkpoint(raw, best, costs):
     """Report replay zero's certified terminal mixture and winning asset."""
     d = raw.shape[1]
     monitor = TiltedCover(d, exact_pairs=True)
@@ -78,20 +74,28 @@ def winner_checkpoint(raw, best):
                   e_hi=outward_float(hi.exp().upper(), True),
                   winner_lo=outward_float(log_winner.exp().lower(), False),
                   winner_hi=outward_float(log_winner.exp().upper(), True))
+
+    # Integrate the vertex tangent on its cone and on the original simplex.
+    log_cone = log_winner + arb(factorial(d - 1)).log()
+    log_cone -= sum(v.log() for i, v in enumerate(costs) if i != best)
+    mass_lo, mass_hi = moment_bounds([-v for v in costs])[0]
+    log_simplex_lo = log_winner + mass_lo.log()
+    log_simplex_hi = log_winner + mass_hi.log()
+    fraction_lo = (log_simplex_lo - log_cone).exp()
+    fraction_hi = (log_simplex_hi - log_cone).exp()
+
+    result['vertex_cone_log_upper'] = outward_float(log_cone.upper(), True)
+    result['vertex_simplex_log_upper'] = outward_float(log_simplex_hi.upper(),
+                                                       True)
+    result['simplex_mass_fraction_lo'] = outward_float(fraction_lo.lower(),
+                                                       False)
+    result['simplex_mass_fraction_hi'] = outward_float(fraction_hi.upper(),
+                                                       True)
+    for ticker, cost in zip(TICKERS, costs):
+        result['Tc_' + ticker] = float(cost.mid())
+
     pd.DataFrame([result]).to_csv(ROOT / '5a_winner.csv', index=False)
-
-
-def projected_day(rate, d):
-    left = d - 1
-    right = 2 * left
-
-    def distance(x):
-        return vertex_log_evidence(x, d) - np.log(20.)
-
-    while distance(right) < 0:
-        right *= 2
-
-    return brentq(distance, left, right) / rate
+    return result
 
 
 def null_report():
@@ -134,16 +138,20 @@ def power_report():
         lo, hi = np.quantile(resampled,[.025,.975],method='inverted_cdf')
         raw = random_market(x, 0, T, gap)
         gamma, grad_gap, support = gamma_estimate(raw)
-        at_vertex, best, derivative = vertex_check(raw)
+        at_vertex, best, costs = vertex_check(raw)
+        min_cost = min(v.lower() for i, v in enumerate(costs) if i != best)
         if at_vertex != (support == 1):
             raise ArithmeticError('Active set disagrees with KKT check')
 
+        cone_upper = simplex_upper = np.nan
         if gap == .8 and T == len(x):
-            winner_checkpoint(raw, best)
+            if not at_vertex:
+                raise ArithmeticError('Planted winner has a nonpositive slope')
 
-        dim = x.shape[1]
-        proj = projected_day(gamma, dim) if at_vertex else np.nan
-        pred = vertex_log_evidence(T * gamma, dim) if at_vertex else np.nan
+            winner = winner_checkpoint(raw, best, costs)
+            cone_upper = winner['vertex_cone_log_upper']
+            simplex_upper = winner['vertex_simplex_log_upper']
+
         data.loc[df.index, 'Gamma_est'] = gamma
         ci = binomtest(int(df.reject.sum()),len(df)).proportion_ci()
         results.append(dict(g=gap,horizon=T,R=200,rejections=df.reject.sum(),
@@ -153,8 +161,9 @@ def power_report():
                             median_censored=np.isinf(median),Gamma_est=gamma,
                             Gamma_fw_gap=grad_gap,best_crp_assets=support,
                             vertex_kkt=at_vertex,vertex_candidate=best + 1,
-                            max_direction_daily=derivative,
-                            vertex_pred_logZ=pred,implied_day=proj))
+                            max_direction_daily=float(-min_cost / T),
+                            vertex_cone_log_upper=cone_upper,
+                            vertex_simplex_log_upper=simplex_upper))
     data.to_csv(ROOT/'5a_power.csv',index=False)
     df = pd.DataFrame(results)
     df['median_day_lower_limit'] = np.minimum(df.median_day, df.horizon)
@@ -206,9 +215,6 @@ def figures(power):
         reached = sub[~sub.median_censored]
         if len(reached):
             ax.plot(100*reached.g,reached.median_day/252,'o',color=color)
-    vertex = obs[obs.vertex_kkt]
-    ax.plot(100 * vertex.g, vertex.implied_day / 252, 'D', ms=6,
-            color='#ad6334', label='Vertex projection, replay 0')
     ax.set_xscale('log')
     ax.set_yscale('log')
     ax.set(xlabel=r'Annual best-to-worst log-growth gap (\%)',

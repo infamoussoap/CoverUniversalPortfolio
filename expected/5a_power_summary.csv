@@ -1,8 +1,8 @@
-g,horizon,R,rejections,median_censored,best_crp_assets,vertex_kkt,vertex_pred_logZ,implied_day
+g,horizon,R,rejections,median_censored,best_crp_assets,vertex_kkt,vertex_cone_log_upper,vertex_simplex_log_upper
 0.05,6791,200,0,True,3,False,,
 0.05,25000,200,0,True,4,False,,
 0.1,6791,200,0,True,2,False,,
 0.1,25000,200,0,True,2,False,,
 0.2,6791,200,0,True,2,False,,
 0.4,6791,200,0,True,2,False,,
-0.8,6791,200,0,True,1,True,2.059274708527189,9358.780905724607
+0.8,6791,200,0,True,1,True,4.342527314283547,2.3219899131654245

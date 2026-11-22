@@ -45,6 +45,14 @@ against the released MAT file. The SP500 experiment uses all 1,277 rows.
 [Upstream FinOL release](https://github.com/ai4finol/finol_data/tree/e90f4614cde7742f9362177dbb50f8667454b4bb)
 · [Workbook checksums](../provenance/finol_sources.json)
 
+On the 403-stock NYSE(N) panel, the CIA return labeled December 2, 1988
+uses the December 2 and December 5 closes of 29.7594223022 and
+2.1699581146. Yahoo's adjusted closes reproduce the same ratio and its
+event record lists no split on either date. The source of the
+discontinuity remains unverified. The certificate uses the supplied row.
+[FinOL workbook](https://github.com/ai4finol/finol_data/blob/e90f4614cde7742f9362177dbb50f8667454b4bb/datasets/NYSE(N)/CIA.xlsx)
+· [Yahoo daily quotes and events](https://query1.finance.yahoo.com/v8/finance/chart/CIA?period1=596937600&period2=597628800&interval=1d&events=div%2Csplits)
+
 Existing checkouts at the same commits can supply the inputs offline.
 The OLPS command materializes the toolbox under `vendor/OLPS/`, while
 the FinOL command reads the supplied checkout in place.

@@ -73,11 +73,14 @@ the input-file and return-matrix SHA-256 values before fitting.
   All pair endpoints are checked by polynomial-degree-exact quadrature on
   3,300 nodes and an independent Arb polynomial product with bounded tail.
   Figure C uses seed 583215 for the horizontal jitter.
-- The replay-0 vertex projection is reported only when interval arithmetic
-  verifies strictly negative derivatives away from the candidate single
-  asset. It uses a common directional scale and takes the increasing branch
-  of the approximation. Censored median times in the power summary have
-  explicit flags. The bootstrap uses 4,000 resamples and seed 583212.
+- For the first 80% sector replay, interval arithmetic verifies a strict
+  vertex optimum and computes the eight directional losses. The winner
+  record stores each cumulative loss \(Tc_i\), the log integral of the
+  tangent on the positive orthant and on the simplex, and the fraction of
+  the former integral inside the simplex. Both integrals give upper
+  bounds on terminal log evidence. Censored median times in the power
+  summary have explicit flags. The bootstrap uses 4,000 resamples and
+  seed 583212.
 - The independent threshold audit uses `log(1+y) <= y` to bound the true
   mixture by the Dirichlet moment generating function of the cumulative
   score. It bounds a block of trading dates with coordinatewise score

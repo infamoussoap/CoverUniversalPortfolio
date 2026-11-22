@@ -49,7 +49,7 @@ def draw():
           (frame.gl_3270 - frame.gl_3300).abs().max())
     print('Percent ranges', lower.min(), upper.max())
     plt.rcParams['text.usetex'] = True
-    plt.rcParams.update({'font.family': 'serif', 'font.size': 10,
+    plt.rcParams.update({'font.family': 'sans-serif', 'font.size': 10,
                          'axes.spines.top': False, 'axes.spines.right': False,
                          'path.simplify': False})
     fig, (cash, band) = plt.subplots(2, 1, sharex=True, figsize=(6.4, 4.1))

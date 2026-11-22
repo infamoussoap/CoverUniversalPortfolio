@@ -39,13 +39,24 @@ def figure():
     mn, mx = logs.min(0), logs.max(0)
     raw = r + np.log(panel['returns'].mean(1)).cumsum()
     band = percentages(box[:, :2], r)
-    spread = 100 * np.expm1(np.stack((mn - r, mx - r)))
     frame = pd.DataFrame(dict(date=dates, t=np.arange(1, len(r) + 1),
                               z_lo=lo, z_hi=hi, ref_logZ=r, ref_min=mn,
                               ref_max=mx, ref_dollars=100 * np.exp(raw),
                               lo_pct=band[:, 0], hi_pct=band[:, 1],
                               log_norm_lo=box[:, 2], log_norm_hi=box[:, 3]))
     frame.to_csv(ROOT / 'fig2_50stock.csv', index=False)
+    draw_stock_figure(frame, ROOT / 'fig2_50stock.pdf')
+    print('stocks terminal dollars, percent, max width, coverage, spread',
+          frame.ref_dollars.iloc[-1], band[-1], np.ptp(band, axis=1).max(),
+          ((lo <= r) & (r <= hi)).sum(), np.max(abs(logs - r)), flush=True)
+
+
+def draw_stock_figure(frame, path):
+    dates = pd.to_datetime(frame.date)
+    relative = np.expm1(frame[['ref_min', 'ref_max']].to_numpy().T
+                        - frame.ref_logZ.to_numpy())
+    color = '#126975'
+
     plt.rcParams['text.usetex'] = True
     fig, axes = plt.subplots(2, 1, sharex=True, figsize=(6.3, 4.25),
                              layout='constrained')
@@ -56,21 +67,28 @@ def figure():
     ax.yaxis.set_major_formatter(ScalarFormatter())
     ax.set_ylabel(r'Cover wealth (\$)')
     ax.tick_params(axis='x', labelbottom=True)
-    bx.fill_between(dates, *band.T, color='0.80', label='Certified interval')
-    bx.plot(dates, band[:, 0], color='0.35', lw=0.55)
-    bx.plot(dates, band[:, 1], color='0.35', lw=0.55)
-    bx.fill_between(dates, *spread, color='black', label='Scramble range')
-    bx.plot(dates, spread[1], color='black', lw=0.45)
+    bx.fill_between(dates, frame.lo_pct, frame.hi_pct, color='0.80')
+    bx.plot(dates, frame.lo_pct, color='0.35', lw=0.55)
+    bx.plot(dates, frame.hi_pct, color='0.35', lw=0.55)
+    bx.fill_between(dates, *(100 * relative), color=color, lw=0)
+    bx.plot(dates, 100 * relative[1], color=color, lw=0.45)
     bx.set_ylabel(r'Relative to estimate (\%)')
-    bx.legend(frameon=False, fontsize=8, loc='upper left')
     bx.set_xlim(pd.Timestamp('1999-12-31'), pd.Timestamp('2025-12-31'))
     bx.xaxis.set_major_locator(mdates.YearLocator(5))
     bx.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
-    fig.savefig(ROOT / 'fig2_50stock.pdf')
+
+    detail = bx.inset_axes([.09, .49, .45, .35])
+    detail.fill_between(dates, *(1e6 * relative), color=color, lw=0)
+    detail.set_title('Scramble range (ppm)', loc='left', fontsize=8, pad=2)
+    detail.set_xlim(bx.get_xlim())
+    detail.xaxis.set_major_locator(mdates.YearLocator(25))
+    detail.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+    detail.set_yticks([-.1, 0, .1])
+    detail.tick_params(labelsize=7, pad=1, length=2)
+    detail.spines[['top', 'right']].set_visible(False)
+
+    fig.savefig(path)
     plt.close(fig)
-    print('stocks terminal dollars, percent, max width, coverage, spread',
-          frame.ref_dollars.iloc[-1], band[-1], np.ptp(band, axis=1).max(),
-          ((lo <= r) & (r <= hi)).sum(), np.max(abs(logs - r)), flush=True)
 
 
 def pair_terms(centered, n):

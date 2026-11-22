@@ -78,21 +78,23 @@ def scatter_by_size(data):
 
     for index, d in enumerate(DIMENSIONS):
         group = data[data.d == d]
+        log_ratio = group.exact_logZ_T if d == 2 else group.midpoint
         jitter = rng.uniform(-.24, .24, len(group)) if len(group) > 1 else 0
         x = np.broadcast_to(index + jitter, (len(group),))
+
         for mask, color in ((group.VR_T <= 1, TEAL), (group.VR_T > 1, ORANGE)):
-            ax.scatter(x[mask], group.midpoint[mask], s=8 if d < 50 else 28,
+            ax.scatter(x[mask], log_ratio[mask], s=8 if d < 50 else 28,
                        color=color, alpha=.45 if d < 50 else 1, linewidths=0)
 
-        ax.plot([index - .28, index + .28], [group.midpoint.median()] * 2,
+        ax.plot([index - .28, index + .28], [log_ratio.median()] * 2,
                 color='black', lw=1.2)
 
     handles = [Line2D([], [], color=c, marker='o', ls='none', ms=5)
                for c in (TEAL, ORANGE)] + [Line2D([], [], color='k', lw=1.2)]
-    ax.legend(handles, [r'$VR_T\leq1$', r'$VR_T>1$', 'Median'], frameon=False)
+    labels = [r'$\mathrm{VR}_T\leq1$', r'$\mathrm{VR}_T>1$', 'Median']
+    ax.legend(handles, labels, frameon=False)
     ax.set_xticks(range(len(DIMENSIONS)), labels=DIMENSIONS)
-    ax.set(xlabel='Stocks in subset',
-           ylabel='Terminal log wealth ratio (midpoint)')
+    ax.set(xlabel='Stocks in subset', ylabel='Terminal log wealth ratio')
     fig.savefig(ROOT / 'figure_C.pdf')
     plt.close(fig)
 
