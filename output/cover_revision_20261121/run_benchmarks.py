@@ -1,6 +1,7 @@
 """Reproduce the stock examples and six-market benchmark sequentially."""
 
 import argparse
+import json
 import os
 from pathlib import Path
 import shutil
@@ -83,6 +84,16 @@ def matlab():
     executable = os.environ.get('MATLAB_BIN', 'matlab')
     if not (olps / 'Strategy/up_run.m').is_file():
         raise FileNotFoundError(f'Pinned OLPS checkout is missing at {olps}')
+
+    provenance = json.loads((PROJECT / 'provenance/inputs.json').read_text())
+    pin = provenance['olps']['commit']
+    git = ['git', '-C', str(olps)]
+    version = subprocess.check_output([*git, 'rev-parse', 'HEAD'], text=True)
+    if version.strip() != pin:
+        raise ValueError(f'OLPS checkout must be at {pin}.')
+    subprocess.run([*git, 'diff', '--quiet', 'HEAD', '--', 'Strategy'],
+                   check=True)
+
     if not shutil.which(executable):
         raise FileNotFoundError('Set MATLAB_BIN to the MATLAB executable.')
 

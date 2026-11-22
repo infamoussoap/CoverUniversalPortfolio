@@ -16,7 +16,7 @@ CASES = {
     'examples': (('table1_width', 'path'),),
     'markets': (('tableB', 'dataset alpha'), ('certified_regret', 'dataset')),
     'tables': (('bench_summary', 'dataset alpha strategy seed'),
-               ('tableD', 'dataset')),
+               ('tableC', 'strategy'), ('tableD', 'dataset')),
     'scaling': (('bench_cost', 'dataset alpha d T method'),),
     'sensitivity': (('finol_nyse_exact_sets', 'dataset S_size'),
                     ('finol_nyse_empty_set_control', 'dataset S_size method')),
@@ -57,6 +57,25 @@ def check_table(folder, name, keys):
     print(f'Passed {filename} ({len(actual)} records)')
 
 
+def check_exact_pair():
+    exact = pd.read_csv(INFERENCE / '5a_exact_d2.csv',
+                        float_precision='round_trip')
+    for name, crossing in [('observed', None), ('planted', 3522)]:
+        path = exact[exact.path == name]
+        np.testing.assert_array_equal(path.t, np.arange(1, 6792))
+        covered = (path.z_lo <= path.exact_lo) & (path.exact_hi <= path.z_hi)
+        if not covered.all():
+            raise ValueError(f'{name}: exact evidence outside the band')
+
+        for column in ('exact_lo', 'z_lo'):
+            hits = path.loc[path[column] >= np.log(20), 't']
+            first = int(hits.iloc[0]) if len(hits) else None
+            if first != crossing:
+                raise ValueError(f'{name}, {column}: first crossing {first}')
+
+    print('Passed 13,582 two-asset prefix checks and both decisions')
+
+
 def check_alternating():
     filename = ROOT / 'output' / 'appendix' / 'alternating.json'
     data = json.loads(filename.read_text())
@@ -82,6 +101,9 @@ def main():
         if item == 'appendix':
             check_alternating()
             continue
+
+        if item == 'inference':
+            check_exact_pair()
 
         folder = INFERENCE if item == 'inference' else BENCH
         for name, keys in CASES[item]:

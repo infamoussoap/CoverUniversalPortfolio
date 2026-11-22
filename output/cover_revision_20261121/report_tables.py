@@ -29,19 +29,8 @@ def table_c(stats):
     for (name, strategy), df in stats[stats.alpha == 1].groupby(
             ['dataset', 'strategy']):
         lo, hi = df[['term_lo', 'term_hi']].median().to_numpy()
-        small = max(abs(lo), abs(hi)) < .001
-        if small:
-            display = interval(np.nextafter(lo * 1e5, -np.inf),
-                               np.nextafter(hi * 1e5, np.inf), 3)
-            unit = 'log gap in 1e-5'
-        else:
-            display = interval(df.pct_lo.median(), df.pct_hi.median(), 3)
-            unit = 'percent strategy relative to Cover'
-
-        verdict = 'ahead' if hi < 0 else 'behind' if lo > 0 else 'undecided'
         row = dict(dataset=name, strategy=strategy, n_seeds=len(df),
-                   term_lo=lo, term_hi=hi, display_interval=display,
-                   display_unit=unit, verdict=verdict)
+                   median_log_gap_lo=lo, median_log_gap_hi=hi)
         for col in ('term_lo', 'term_hi', 'pct_lo', 'pct_hi', 'n_ahead',
                     'n_behind', 'n_undecided', 'verified_tol'):
             vals = df[col].fillna(np.inf)
@@ -57,7 +46,10 @@ def table_c(stats):
     table.to_csv(OUT / 'tableC_seed_ranges.csv', index=False)
     wide = []
     order = ('nyse-o', 'nyse-n', 'djia', 'sp500', 'msci', 'tse')
-    for strategy, block in table.groupby('strategy'):
+    strategies = ('first_order', 'sample_100', 'sample_1000', 'sample_10000',
+                  'sample_100000', 'Soft-Bayes', 'VB-FTRL', 'UCRP')
+    for strategy in strategies:
+        block = table[table.strategy == strategy]
         row = dict(strategy=strategy)
         for dataset in order:
             r = block[block.dataset == dataset].iloc[0]
