@@ -1,0 +1,175 @@
+{
+  "olps": {
+    "url": "https://github.com/OLPS/OLPS.git",
+    "commit": "9120783cd59a7966b0f78e2b5668030a4378b8af",
+    "datasets": {
+      "nyse-o": {
+        "file_sha256": "d69006454ac25b3eead931fd7964a15da6f13d3383dea1c652c1cd8a3b3a1b0e",
+        "returns_sha256": "8c0cd2b895c3ea85ee31a4e9e143b424a3aec136835beaa30e32df8e03b7339a",
+        "shape": [
+          5651,
+          36
+        ]
+      },
+      "nyse-n": {
+        "file_sha256": "9b68189218f845a54c6760b1c37a100aa7437498a0df79e7178772735e76808e",
+        "returns_sha256": "2f288e5e760a355d28be8970b74c9e2d0711cd09a730cf31e2d2df338a413e22",
+        "shape": [
+          6431,
+          23
+        ]
+      },
+      "sp500": {
+        "file_sha256": "3026a41802a09833a4abdbffbb318dfa143349709abd3a6277ea4b687054716c",
+        "returns_sha256": "9bfc1ad6dcb529eaa465b0df4e48d6737a96bef026ceb2ed023f9fda85f6913a",
+        "shape": [
+          1276,
+          25
+        ]
+      },
+      "djia": {
+        "file_sha256": "4e268f3f35ee133680805f972477ac6021f54c58d372eec78b03ffc8dcde718c",
+        "returns_sha256": "07e29f1e9eee7b502f2a0bce44231a547f065e493b95a9f6873c21ac45bd2fdf",
+        "shape": [
+          507,
+          30
+        ]
+      },
+      "tse": {
+        "file_sha256": "5e623ef7656ca2ce9d028db7f640913e6f015d60364ccccd3b6f63c8f83857ce",
+        "returns_sha256": "29635384c411685353880eae62cfafb969afffc33648b289401e5b72a005991e",
+        "shape": [
+          1259,
+          88
+        ]
+      },
+      "msci": {
+        "file_sha256": "889a89f67f8d6ebae56befae7e63fd3ff61ad4b47e9ee53f5f1d8d06b404b128",
+        "returns_sha256": "7f2db1a81199448c0ac6c7994f04160d62a6b6c999b8e6de6794cfb15d6cd846",
+        "shape": [
+          1043,
+          24
+        ]
+      }
+    }
+  },
+  "finol": {
+    "url": "https://github.com/ai4finol/finol_data.git",
+    "commit": "e90f4614cde7742f9362177dbb50f8667454b4bb",
+    "datasets": {
+      "finol_nyse": {
+        "panel": "NYSE(N)",
+        "test_file_sha256": "e4f797686f6143a00dee6dbc5bf4263b17330f9ff846d2b451145fb101f78251",
+        "dates_sha256": "c9e4353cc0a955f48c94306ce98992d5b9f36852b2feccce2da9ebbbaf2d61da"
+      },
+      "finol_sp": {
+        "panel": "SP500",
+        "test_file_sha256": "276b1ebce03df09c34e8596975f7ba75e753819e83956572ea7c09021be60c5e",
+        "dates_sha256": "14527301be0198be7f9ec1e2fb084576f621b1ed3f5bb05a3fd4a260d0c4a253"
+      }
+    }
+  },
+  "yahoo": {
+    "source": "https://finance.yahoo.com/",
+    "yfinance_version": "1.4.1",
+    "stocks": {
+      "shape": [
+        6539,
+        50
+      ],
+      "tickers": [
+        "AAPL",
+        "ADP",
+        "CSCO",
+        "IBM",
+        "MSFT",
+        "ABT",
+        "BMY",
+        "JNJ",
+        "MRK",
+        "PFE",
+        "AXP",
+        "BAC",
+        "C",
+        "JPM",
+        "WFC",
+        "CAT",
+        "DE",
+        "EMR",
+        "HON",
+        "ITW",
+        "CL",
+        "KMB",
+        "KO",
+        "PEP",
+        "PG",
+        "F",
+        "HD",
+        "LOW",
+        "MCD",
+        "NKE",
+        "CVX",
+        "EOG",
+        "HAL",
+        "OXY",
+        "XOM",
+        "AEP",
+        "D",
+        "DUK",
+        "ED",
+        "SO",
+        "APD",
+        "ECL",
+        "FCX",
+        "NEM",
+        "NUE",
+        "CMCSA",
+        "DIS",
+        "NYT",
+        "T",
+        "VZ"
+      ],
+      "retrieved_utc": "2026-11-21T04:10:06.708212+00:00",
+      "base_date": "1999-12-31",
+      "last_date": "2025-12-31",
+      "dates_sha256": "c960c9ca5a471f90a4d3942eda9b0b67a35cdf00567aa64a11d46d6ce5037f0e",
+      "source_sha256": "de559966e8a3393a9c61ad04160d13f5e11ecca13742eb133962325438bfd0a4",
+      "returns_sha256": "8c232656ab60d52aab6b88d19ece8690876783d6c3fc4e4e63abff91c61dab16",
+      "candidate_order": {
+        "technology": "AAPL ADP CSCO IBM MSFT INTC ORCL",
+        "health care": "ABT BMY JNJ MRK PFE AMGN MDT",
+        "financials": "AXP BAC C JPM WFC USB TRV",
+        "industrials": "CAT DE EMR HON ITW ETN PH",
+        "consumer staples": "CL KMB KO PEP PG SYY CHD",
+        "consumer discretionary": "F HD LOW MCD NKE GPC WHR",
+        "energy": "CVX EOG HAL OXY XOM COP APA",
+        "utilities": "AEP D DUK ED SO ETR CMS",
+        "materials": "APD ECL FCX NEM NUE PPG SHW",
+        "communications and media": "CMCSA DIS NYT T VZ OMC IPG"
+      }
+    },
+    "sectors": {
+      "shape": [
+        6791,
+        9
+      ],
+      "tickers": [
+        "XLB",
+        "XLE",
+        "XLF",
+        "XLI",
+        "XLK",
+        "XLP",
+        "XLU",
+        "XLV",
+        "XLY"
+      ],
+      "retrieved_utc": "2026-11-21T15:16:12.912378+00:00",
+      "base_date": "1998-12-31",
+      "last_date": "2025-12-31",
+      "dates_sha256": "4cbdb2b9ed9c95ba7be00862ac99fe8acb26774dc9f01747159e3dee97627a47",
+      "source_sha256": "989292996ac00438f93ad02472245abc42bf34e34f8b0160ad6e95a5b5e83858",
+      "returns_sha256": "faa7083ce20aea21bd1789f03c014102628c7f500a282c39ec5804bbe29f6825"
+    }
+  }
+}
