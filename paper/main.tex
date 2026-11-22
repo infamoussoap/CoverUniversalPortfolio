@@ -587,9 +587,9 @@ precision or truncation before returning an interval.
 \end{minipage}
 \end{center}
 
-We treat the recorded binary64 returns and allocations as exact inputs
-and compute both endpoints with outward rounding
-(Appendix~\ref{app:bench-data}). When $S=\varnothing$, the streaming
+We treat the stored returns and allocations as exact inputs and evaluate
+the bounds in 128-bit Arb arithmetic with outward rounding
+\citep{johansson2017arb,pythonflint}. When $S=\varnothing$, the streaming
 update requires $O(d^2)$ storage and work per session, and evaluating
 the pair series through degree $N$ takes $O(d^2N)$ operations at a
 checkpoint. An explicit expansion with $|S|$ exact days requires
@@ -608,9 +608,9 @@ take their intersection.
 For Apple and Microsoft, the uniform-prior integral reduces to a
 polynomial integral in one variable, allowing us to enclose it directly
 at all 6,539 closes from January 2000 through December 2025 using a
-positive-coefficient Bernstein recursion. As a check, we also integrated
-the same polynomial with independent Gauss--Legendre rules of orders
-3,270 and 3,300, which differed by at most $2.81\times10^{-14}$ log units.
+positive-coefficient Bernstein recursion. We checked the result by
+Gauss--Legendre quadrature at two orders, which agreed with each other
+to within $2.81\times10^{-14}$ log units.
 
 On this pair, an initial \$100 invested in Cover grew to \$13,590.86,
 with the pair-series band enclosing the direct integral on every date
@@ -640,9 +640,10 @@ This choice allowed us to hold the universe fixed for all 6,539 returns
 without imputing missing prices, although it favors surviving stocks.
 
 On this panel, an initial \$100 invested in Cover grew to an estimated
-\$1,771.00. The pooled Sobol reference lay inside the band on all 6,539
-closes, with the largest single-net deviation from the pooled estimate
-equal to $1.52\times10^{-7}$ log units. At the final close the band
+\$1,771.00. The pooled estimate from eight independently scrambled Sobol
+nets (Appendix~\ref{app:refs}) lay inside the band on all 6,539 closes,
+and the largest deviation of a single-net estimate from the pooled
+reference was $1.52\times10^{-7}$ log units. At the final close the band
 extended from 0.0086\% below the estimate to 0.0497\% above it, and
 its greatest width over the full period was 0.062 percentage points.
 Computing the evidence interval at every close took 55 seconds.
@@ -674,11 +675,10 @@ of payoffs around their equal-weight value.
 \subsection{Data and strategies}
 Table~\ref{tab:bench-accuracy} gives the dimensions and dates of the six
 daily return matrices distributed with the OLPS toolbox \citep{li2016olps}.
-We apply the certificate directly to the stored price relatives, taking
-$S=\emptyset$ by default since all entries are positive. This includes
-the five rows with an entry outside $[0.5,2]$, which we identify in
-Appendix~\ref{app:bench-data}. For the scaling
-experiment we also use FinOL NYSE(N) and FinOL SP500 \citep{finol}.
+We use the published price relatives as supplied, including the five rows
+with an entry outside $[0.5,2]$. Since all entries are positive, we take
+$S=\emptyset$ by default. For the scaling experiment we also use FinOL
+NYSE(N) and FinOL SP500 \citep{finol}.
 
 To assess how closely the strategies track Cover under the uniform prior,
 we compare the first-order rule~\eqref{eq:first-order}, sampled UP
@@ -686,17 +686,16 @@ we compare the first-order rule~\eqref{eq:first-order}, sampled UP
 \citep{jezequel2026}. For sampled UP we draw $M$ fixed portfolios from
 the prior and weight them by their realized wealth, repeating the
 experiment with five independent draws of the entire sample for each
-$M\in\{10^2,10^3,10^4,10^5\}$. We use the horizon-dependent learning
-rate for Soft-Bayes and the published iteration schedule at
-$(\lambda,\mu)=(560,2)$ for VB-FTRL.
+$M\in\{10^2,10^3,10^4,10^5\}$. For Soft-Bayes we use the
+horizon-dependent learning rate $\eta=q/(1+q)$ with
+$q=\sqrt{\log(d)/(dT)}$, and for VB-FTRL we use the published
+finite-iteration schedule with $(\lambda,\mu)=(560,2)$.
 
 All strategies start at 1/N and trade without costs. We also compare
 Cover with 1/N itself, whose normalized log wealth is zero, so that the
-evidence interval directly encloses the gap. For the numerical reference
-we pool eight scrambled Sobol nets of $2^{16}$ points, using a
-degree-four control polynomial whose integral we compute analytically
-(Appendix~\ref{app:equity-protocol}). The accompanying files give the
-same comparisons for EG, ONS, PAMR and OLMAR at the toolbox defaults.
+evidence interval directly encloses the gap. For an independent estimate
+of Cover's wealth we use the same Sobol quadrature as on the 50-stock
+panel (Appendix~\ref{app:refs}).
 
 \subsection{Accuracy of the certificate}
 To compare the size of the certificate with the error it bounds, let
@@ -768,8 +767,8 @@ falling by a factor of about 35 from $M=10^2$ to $M=10^5$.
 \caption{Certified terminal gap $\Delta_T=\log Z_T-\log V_T$ in units of
 $10^{-4}$ log wealth, rounded outward. Positive values mean Cover finished
 ahead. For sampled UP we give the smallest interval containing the five
-individual seed intervals. A dagger means that one seed was certified ahead
-and another behind.}
+certified intervals, one per independent draw. A dagger means that one draw
+finished certified ahead of Cover and another behind.}
 \label{tab:bench-gaps}
 \begingroup
 \setlength{\tabcolsep}{2.5pt}\footnotesize
@@ -834,8 +833,8 @@ approximately 0.3\% to 1.6\%, with the two SP500 values, \$1.62 and
 \citet{hindawi2020} set transaction costs to zero and specify $M=100$
 and $S=500$ for their random-walk sampler, while
 \citet{mathematics2022} use implementations provided by Li and
-coauthors and report the zero-cost baseline in Table~A2. For our replay
-we use the released toolbox with the settings described below.
+coauthors and report the zero-cost baseline in Table~A2. For our comparison
+we ran the original OLPS toolbox with zero transaction costs.
 
 \begin{table}[tbp]
 \centering
@@ -864,10 +863,8 @@ TSE & $[1.594859,1.594870]$ & 1.587951 & $[43.40,43.47]$ & 1.5944--1.5950 & 1.60
 \end{tabular}
 \end{table}
 
-Each day the toolbox starts ten walks from equal weights, takes five
-proposal steps of size $0.005$ per walk and averages the ten endpoints.
-It imposes a floor of $0.004$ per coordinate, damping the acceptance
-weight for the last coordinate near that floor. The resulting terminal
+Each day the toolbox averages the endpoints of short random walks from
+equal weights, with a floor on each portfolio weight. The resulting terminal
 wealth lay inside the certified interval on NYSE(O). On the other five
 markets it lay outside, differing from the interval midpoint by between
 0.04\% and 1.4\% in absolute value. On MSCI and SP500 this difference
@@ -900,10 +897,10 @@ allocations alone took 1.1--346 seconds for VB-FTRL and at most
 \begin{table}[tbp]
 \centering
 \caption{Cost of the pair-series evidence interval at every close, on the
-first $d$ assets and first $T$ days of FinOL NYSE(N). Times include
-initialization, updates and endpoint evaluation and are medians of three
-single-threaded timings. Final widths are in log units, rounded up, and
-memory is median peak resident set size. On FinOL SP500 ($d=339$, $T=1{,}277$)
+first $d$ assets and first $T$ days of FinOL NYSE(N). Times are medians of
+three single-threaded runs on an Apple M1 Pro, including initialization,
+updates and endpoint evaluation. Final widths are in log units, rounded up,
+and memory is median peak resident set size. On FinOL SP500 ($d=339$, $T=1{,}277$)
 the corresponding figures were 374 seconds, 359~MiB and a width below
 $6.1\times10^{-7}$.}
 \label{tab:bench-cost}
@@ -1029,11 +1026,11 @@ rebalanced portfolios, the test can have little power against
 predictable changes that require switching between portfolios.
 
 For these experiments we fixed the uniform prior, set $\delta=0.05$
-(threshold 20) and monitored the lower e-value at every close. We took
-the nine original Select Sector SPDRs from January 1999 to December 2025
-as the primary market, with the six OLPS datasets and the 50-stock panel
-as secondary markets. All eight market histories had been examined
-previously. To account for the eight comparisons, we also applied e-BH at
+(threshold 20) and monitored the lower e-value at every close. For the
+primary market we used Yahoo adjusted closes for the nine original Select
+Sector SPDRs from January 1999 to December 2025, with the six OLPS datasets
+and the 50-stock panel as secondary markets. All eight market histories
+had been examined previously. To account for the eight comparisons, we also applied e-BH at
 level $0.05$ to the \emph{terminal} lower e-values \citep{wang2022false}.
 
 \subsection{Eight markets}
@@ -1089,7 +1086,7 @@ near one.}
 To check the stopping rule against direct integration, we used the
 technology and utilities sector ETFs (XLK and XLU). The evidence
 interval enclosed the Bernstein integral at all 6,791 closes, and an
-independent 3,396-node Gauss--Legendre rule agreed with the integral
+independent Gauss--Legendre calculation agreed with the integral
 to within $1.9\times10^{-14}$ log units. Neither the integral nor the
 certified lower endpoint reached 20 on the observed returns. We
 therefore repeated the comparison on the same pair with an 80\% annual
@@ -1259,6 +1256,11 @@ selected the Yahoo panels for complete histories, thus favoring surviving
 stocks, and assumed frictionless trading in all replays. Introducing
 transaction costs would change the wealth earned by the component portfolios
 and hence the wealth of Cover's mixture \citep{blumkalai1999}.
+
+\paragraph{Code and data availability.}
+The code for reproducing the experiments and figures, together with
+instructions for obtaining the data, is available at
+\url{https://github.com/infamoussoap/CoverUniversalPortfolio}.
 
 \begingroup
 \small
@@ -1504,39 +1506,19 @@ denotes entrywise powers. Thus the contractions and the quadratic
 forms in Lemma~\ref{lem:streaming-moments} together require $O(d^2)$
 storage and arithmetic per session.
 
-\section{Numerical references and replay details}
+\section{Numerical checks}
 \label{app:equity-protocol}
 \small
 
-\subsection{Numerical references and solver settings}\label{app:refs}
+\subsection{Reference integrals}\label{app:refs}
 
-For the 50-stock panel and the six OLPS datasets, we constructed our
-numerical reference using eight independently scrambled Sobol nets of
-$2^{16}$ points with seeds 841120--841127. We used stick breaking for
-four nets and normalized independent gamma draws for the other four,
-where the gamma draws are exponential when $\alpha=1$. Having
-integrated the degree-four control polynomial exactly, we averaged
-the estimated residual masses across the eight nets before taking
-logarithms.
-
-For the 50-stock diagnostics in Table~\ref{tab:curvature-slack}, we
-reweighted eight $2^{13}$-point nets by $e^G$ using seeds 91491--91498.
-For the two-asset diagnostics we used Gauss--Legendre rules of orders
-256 and 512, increasing the orders to 3,270 and 3,300 to check the
-full wealth integral. Under the uniform prior on two assets with
-$g=(h,-h)$, direct integration gives $\Phi_\varnothing=\sinh(h)/h$,
-with value one at $h=0$. Dividing the terminal Bernstein enclosure
-by this expression gives $\bar Z_T/\Phi_\varnothing\simeq0.83219555$
-on AAPL--MSFT.
-
-For sampled UP, we drew $M$ fixed Dirichlet portfolios using NumPy
-PCG64 with seeds 74081--74085. After the first trade at equal weights,
-the strategy played the sample mean weighted by the wealth of each
-portfolio over all previous closes. For Soft-Bayes we used
-$\eta=q/(1+q)$ with $q=\sqrt{\log(d)/(dT)}$ \citep{orseau2017}, while
-for VB-FTRL we used the published finite-iteration schedule with
-$(\lambda,\mu)=(560,2)$, skipping complete cycles only when a binary64
-state repeated exactly \citep{jezequel2026}.
+For the 50-stock panel and the six OLPS markets, we estimated Cover's
+wealth using eight independently scrambled Sobol nets of $2^{16}$ points
+each. We integrated a degree-four control polynomial analytically and
+averaged the estimates of the residual across nets before taking logarithms.
+For the width decomposition in Table~\ref{tab:curvature-slack}, we instead
+estimated the tilted moments by reweighting eight nets by $e^G$ on the
+50-stock panel and by direct Gauss--Legendre quadrature on AAPL--MSFT.
 
 \subsection{Exact check on the five-stock alternating market}
 \label{app:paired-replay}
@@ -1555,69 +1537,7 @@ on the next odd day equal to one conditional on $U$. It follows that
 Using the recorded value of $\delta$, we evaluated this sum in
 rational arithmetic for the first 160 sessions and compared it with
 the first-order wealth in Arb, thus identifying session 78 as the
-first for which $|\Delta_t|>0.01$. Over the full replay, independent
-96- and 192-node Gauss--Jacobi rules agreed to within $9\times10^{-14}$
-in log evidence.
-
-\subsection{Data and the OLPS replay}\label{app:bench-data}
-
-We used the six OLPS matrices at commit
-\nolinkurl{9120783cd59a7966b0f78e2b5668030a4378b8af} \citep{li2016olps}.
-The toolbox reports the market periods, although the matrices have
-no date or stock labels. Using one-based indices, we record the five
-raw relatives outside $[0.5,2]$ as (day, column, relative), with
-the returns rounded here for display. The observations were
-$(6189,10,0.45455)$ on NYSE(N), $(470,16,0.40266)$ on DJIA, and
-$(690,32,0.49298)$, $(814,67,0.36854)$ and $(889,18,0.45652)$
-on TSE. The file \path{bench_datasets.csv} gives the six source
-SHA-256 checksums.
-
-For FinOL we used the release at commit
-\nolinkurl{e90f4614cde7742f9362177dbb50f8667454b4bb} \citep{finol},
-keeping the assets in source-filename order. FinOL assigns each
-consecutive-close ratio to the earlier date and sets the last relative
-to one. Our test matrices agree entry by entry with those of the
-release, and the file and return-matrix checksums are available in
-\path{finol_provenance.json}.
-
-We retrieved the Yahoo adjusted closes on 21 November 2026 using
-\texttt{yfinance} 1.4.1 \citep{yahooprices,yfinance}. For the 50 stocks,
-we used the prices retrieved at 04:10 UTC with 31 December 1999 as
-the base close. For the sectors, we used the provider's adjusted
-closes retrieved at 15:16 UTC with 31 December 1998 as the base
-close. The nine sector tickers were XLB, XLE, XLF, XLI, XLK, XLP,
-XLU, XLV and XLY. For the randomized sector and DJIA replays, we
-used PCG64 with seed $(583211,d,\text{replay},\text{pass})$, while
-seed 583210 fixed the order of the planted drifts and $(583214,d)$
-fixed the random stock subsets.
-
-We used MATLAB R2023a Update 4 solely for the original toolbox
-\path{up_run.m}, which we ran on a single thread with zero costs and
-twister seed 724191. All three runs on each market gave the same
-weights, and the resulting daily payoffs agreed with those of an
-independent binary64 replay to within $9\times10^{-16}$. For all other
-runs we used an Apple M1 Pro with Python 3.12.13, python-flint 0.9.0
-(128-bit Arb), NumPy 2.4.6 and SciPy 1.17.1
-\citep{johansson2017arb,pythonflint}. We report the median time over
-three single-threaded runs.
-
-\paragraph{Code and data availability.}
-The certificate, numerical integration code and experiment scripts are
-available at \url{https://github.com/infamoussoap/CoverUniversalPortfolio}.
-In the accompanying results archive,
-Section~\ref{sec:examples} uses \path{aapl_msft_exact.csv},
-\path{fig2_50stock.csv} and \path{table1_width.csv}.
-For Section~\ref{sec:bench}, \path{bench_evidence.csv} gives daily
-evidence, \path{bench_gaps.csv} and \path{bench_summary.csv} give
-strategy comparisons, \path{up_audit.csv} records published values
-and sources, \path{bench_cost.csv} and \path{bench_alloc_time.csv}
-give timings, and \path{certified_regret.csv} gives the hindsight
-bounds. The exact-row checks are in \path{exact_row_width.csv},
-\path{exact_sets_all.csv}, \path{finol_nyse_exact_sets.csv} and
-\path{finol_nyse_empty_set_control.csv}.
-For Section~\ref{sec:test}, \path{evalue_1overN.csv} and
-\path{evalue_summary.csv} give the paths and decisions.
-\path{full_experiment_5a.zip} contains the permutation, planted-drift,
-exact-pair and subset records, their seeds and the associated figures.
+first for which $|\Delta_t|>0.01$. Over the full replay, Gauss--Jacobi
+quadrature at two orders agreed to within $9\times10^{-14}$ in log evidence.
 
 \end{document}
