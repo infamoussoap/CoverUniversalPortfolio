@@ -115,9 +115,10 @@ Thus, when $R_T(V)/T\to0$, the difference in average log growth per trading
 day between the strategy and its hindsight benchmark tends to zero.
 
 \citet{cover1991} introduced the universal portfolio to achieve this
-property. Starting from a prior $\pi$ on the simplex $\mathcal S_d$, the
-strategy assigns capital to each fixed portfolio according to its prior
-weight. After $t$ days the capital assigned to each portfolio has grown in
+property. In the formulation of \citet[Definition~1]{coverordentlich1996},
+a prior $\pi$ on the simplex $\mathcal S_d$ determines the initial
+distribution of capital among the fixed portfolios. After $t$ days the
+capital assigned to each portfolio has grown in
 proportion to its wealth $S_t(w)$, so the aggregate allocation for the
 next day is
 \begin{equation}
@@ -130,18 +131,21 @@ product of these payoffs telescopes,
 \begin{equation}
   V_t^\mathrm{Cover} = \prod_{s=1}^t(w_s^\mathrm{Cover}\cdot x_s)=\prod_{s=1}^t\frac{Z_{s}}{Z_{s-1}}=Z_t.
 \end{equation}
-With the uniform prior, Cover's regret is at most $(d-1)\log(T+1)$, which
-has the optimal worst-case order in $T$ for fixed $d$
-\citep{cover1991,ordentlichcover1998}. The difficulty in implementing the
+With the uniform prior, Cover's regret is at most $(d-1)\log(T+1)$ on
+every return sequence \citep[Theorem~1]{coverordentlich1996}, and for
+fixed $d$ this is the optimal worst-case order in $T$
+\citep{ordentlichcover1998}. The difficulty in implementing the
 strategy lies in computing $Z_t$. Direct expansion of $S_t(w)$ produces
 $\binom{t+d-1}{d-1}$ coefficients in the dense case, making the exact
 recursion expensive as the number of stocks grows
 \citep{coverordentlich1996}.
 
-This computational cost has motivated other approaches to online portfolio
-selection \citep{helmbold1998,agarwal2006,hazankale2015,gaivoronskistella2000}.
-For a more general treatment of optimization over portfolio weights, see
-\citet{chokvasil2025}. In particular, the VB-FTRL strategy of
+Several online portfolio strategies compute their allocations without
+evaluating Cover's integral
+\citep{helmbold1998,agarwal2006,hazankale2015,gaivoronskistella2000}.
+\citet{chokvasil2025} develop the Cauchy--Simplex algorithm for convex
+optimization on the simplex and apply it to portfolio selection.
+The VB-FTRL strategy of
 \citet{jezequel2026} achieves the same logarithmic order of regret with an
 efficient update. This guarantee controls the loss relative to the best fixed
 portfolio in hindsight, leaving open how closely VB-FTRL tracks Cover on a
@@ -159,8 +163,8 @@ $\Delta_t=\log Z_t-\log V_t$. We require nonnegative price relatives
 with at least one positive entry per day, and positive payoffs for the
 strategy whose log wealth we compare.
 
-The 23-stock NYSE(N) benchmark illustrates why the integration error matters
-\citep{li2014survey,li2016olps}. Over the period from 1985 to 2010, one
+The 23-stock NYSE(N) benchmark \citep{li2014survey,li2016olps} illustrates
+why the integration error matters. In our replay from 1985 to 2010, one
 dollar invested in the OLPS toolbox's universal portfolio grew to \$31.558,
 just ahead of the \$31.552 earned by the equal-weight strategy (1/N). Our certificate places Cover's
 terminal wealth between \$31.00 and \$31.25, rounded outward, thus establishing
@@ -198,7 +202,7 @@ integrating polynomials on a simplex and evaluating marginal likelihoods
 sample fixed portfolios, as analyzed by \citet{blumkalai1999}, who also
 consider transaction costs. \citet{kalai2002} give a sampling algorithm and
 identify return histories on which sampling directly from the prior is
-expensive. For more general families of strategies, \citet{akcoglu2002}
+expensive. For more general families of strategies, \citet{akcoglu2004}
 study probabilistic approximation, while \citet{crossbarron2003} obtain
 closed-form updates for particular classes of past-dependent targets.
 
@@ -638,10 +642,11 @@ endpoints.}
 \label{fig:aapl}
 \end{figure}
 
-Figure~\ref{fig:fifty} gives the corresponding results for 50 stocks.
+Figure~\ref{fig:fifty} gives the corresponding results for 50 stocks,
+using daily adjusted closing prices from Yahoo Finance \citep{yahooprices,yfinance}.
 Within each of ten industry groups, we took the first five candidate
-tickers with a positive Yahoo adjusted close on every SPY trading date
-from 31 December 1999 to 31 December 2025 \citep{yahooprices,yfinance}.
+tickers with a positive adjusted close on every SPY trading date
+from 31 December 1999 to 31 December 2025.
 This choice allowed us to hold the universe fixed for all 6,539 returns
 without imputing missing prices, although it favors surviving stocks.
 
@@ -689,17 +694,19 @@ $S=\emptyset$ by default. For the scaling experiment we also use FinOL
 NYSE(N) and FinOL SP500 \citep{finol}.
 
 Under the uniform prior, we compare Cover with the first-order
-rule~\eqref{eq:first-order}, sampled UP
-\citep{blumkalai1999}, Soft-Bayes \citep{orseau2017} and VB-FTRL
-\citep{jezequel2026}. For sampled UP we draw $M$ fixed portfolios from
-the prior and weight them by their realized wealth, repeating the
-experiment with five independent draws of the entire sample for each
-$M\in\{10^2,10^3,10^4,10^5\}$. For Soft-Bayes we use the
+rule~\eqref{eq:first-order}, sampled UP, Soft-Bayes \citep{orseau2017}
+and VB-FTRL \citep{jezequel2026}. For sampled UP, \citet{blumkalai1999}
+assign equal initial capital to $M$ portfolios drawn from the prior, so
+their first allocation is the sample mean. Our variant starts at 1/N,
+as do the other strategies, and then weights each sampled portfolio by
+the wealth it would have earned over all preceding days.
+We repeat the experiment with five independent draws of the entire sample
+for each $M\in\{10^2,10^3,10^4,10^5\}$. For Soft-Bayes we use the
 horizon-dependent learning rate $\eta=q/(1+q)$ with
 $q=\sqrt{\log(d)/(dT)}$, and for VB-FTRL we use the published
 finite-iteration schedule with $(\lambda,\mu)=(560,2)$.
 
-All strategies start at 1/N and trade without costs. We also compare
+All strategies trade without costs. We also compare
 Cover with 1/N itself, whose normalized log wealth is zero, so that the
 evidence interval directly encloses the gap. For an independent estimate
 of Cover's wealth we use the same Sobol quadrature as on the 50-stock
@@ -838,7 +845,7 @@ markets the published figures differ from the interval midpoint by
 approximately 0.3\% to 1.6\%, with the two SP500 values, \$1.62 and
 \$1.65, lying on opposite sides of the certified interval.
 
-\citet{hindawi2020} set transaction costs to zero and specify $M=100$
+\citet{hindawi2020} set transaction costs to zero and specify $m=100$
 and $S=500$ for their random-walk sampler, while
 \citet{mathematics2022} use implementations provided by Li and
 coauthors and report the zero-cost baseline in Table~A2. For our comparison
@@ -846,8 +853,9 @@ we ran the original OLPS toolbox with zero transaction costs.
 
 \begin{table}[tbp]
 \centering
-\caption{Terminal wealth per initial dollar under the uniform prior.
-The MATLAB replay and published figures are point values. The toolbox
+\caption{Terminal wealth per initial dollar. The interval encloses
+uniform-prior Cover wealth. The toolbox column gives our MATLAB replay,
+and the published column gives the UP wealth reported by each source. The toolbox
 gap is $\Delta_T$ in $10^{-4}$ log units, rounded outward. The sample range
 gives the five terminal wealths' minimum and maximum, rounded outward.
 Published values come from \citet[Table~1(a)]{li2012olmar} for NYSE(O),
@@ -1006,7 +1014,7 @@ optimal exactly when these derivatives are all nonpositive, and since
 $\sum_i r_{s,i}=d$, their sum is zero. At an optimum every derivative
 must therefore vanish, giving \eqref{eq:h0} as the condition for 1/N to be the
 conditionally growth-optimal, or num\'eraire, portfolio. Taking 1/N as
-the index thus gives a probabilistic version of the efficient-index
+the index connects our discrete-time test to the efficient-index
 question studied by \citet{vovk2011efficient} and
 \citet{vovk2016probabilityfree}.
 
@@ -1038,7 +1046,8 @@ predictable changes that require switching between portfolios.
 
 For these experiments we fixed the uniform prior, set $\delta=0.05$
 (threshold 20) and monitored the lower e-value at every close. For the
-primary market we used Yahoo adjusted closes for the nine original Select
+primary market we used Yahoo Finance adjusted closes
+\citep{yahooprices,yfinance} for the nine original Select
 Sector SPDRs from January 1999 to December 2025, with the six OLPS datasets
 and the 50-stock panel as secondary markets. All eight market histories
 had been examined previously. To account for the eight comparisons, we also applied e-BH at
