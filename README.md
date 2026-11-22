@@ -8,18 +8,6 @@ whether equal weighting is growth-optimal. The default pair-series evaluation
 intersects the signed cubic-moment interval with the integrated bound
 $|I(J)| \le I(C)$ at every checkpoint.
 
-## Read and compile the paper
-
-The [manuscript](paper/main.tex), bibliography, and six figure PDFs are in
-`paper/`. To build the paper from the repository root, run
-
-```sh
-latexmk -cd -pdf -outdir=build paper/main.tex
-```
-
-The compiled paper is written to `paper/build/main.pdf`. The
-[template license](paper/License.txt) accompanies the bundled `arxiv.sty`.
-
 ## Quick start
 
 Use CPython 3.12. The pinned package versions are those used for the paper.

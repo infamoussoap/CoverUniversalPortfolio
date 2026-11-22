@@ -8,6 +8,7 @@ __pycache__/
 build/
 dist/
 .env
+/paper/
 /vendor/
 /particle_universal/results/
 /output/cover_revision_20261121/data/
