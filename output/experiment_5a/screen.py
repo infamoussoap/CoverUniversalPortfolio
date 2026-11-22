@@ -34,7 +34,7 @@ def moments(score):
 
 
 @njit(cache=True)
-def pair_contractions(g, h, base, Q, K):
+def pair_contractions(g, h, base, Q, K, C):
     d = len(h)
     den = np.ones(len(base))
     for i in range(1, len(den)):
@@ -44,7 +44,7 @@ def pair_contractions(g, h, base, Q, K):
     for i in range(d):
         raised[i] = raising(base,h[i])
         single[i] = raised[i] @ den
-    q, k = 0., 0.
+    q, k, c = 0., 0., 0.
     for i in range(d):
         for j in range(i+1):
             diff = h[i]-h[j]
@@ -55,8 +55,9 @@ def pair_contractions(g, h, base, Q, K):
             # Diagonal prior factor two; off-diagonal occurs twice.
             q += 2*f*Q[i,j]
             k += 2*f*K[i,j]
+            c += 2*f*C[i,j]
     scale = math.exp(g.min())/(d*(d+1))
-    return q*scale, k*scale
+    return q*scale, k*scale, c*scale
 
 
 @njit(cache=True)
@@ -113,8 +114,9 @@ def lower(g, h, base, mgf, Q, K, C, J, diag, weighted, r4, rising):
     egj = (3*(g @ weighted)+6*(g @ diag))/rising[4]
     eg2j = (2*p[2].sum()*diag.sum()+12*(g @ J @ g)
             +6*(p[2] @ weighted)+24*(p[2] @ diag))/rising[5]
-    q, k = pair_contractions(g,h,base,Q,K)
-    ah = min(q,qhigh)-(ej+egj+eg2j/2-err)/3+min(k,math.exp(peak)*r4)
+    q, k, c = pair_contractions(g, h, base, Q, K, C)
+    j_low = max(ej + egj + eg2j / 2 - err, -c)
+    ah = min(q, qhigh) - j_low / 3 + min(k, math.exp(peak) * r4)
     return math.log(mgf)-max(ah,0.)/mgf
 
 

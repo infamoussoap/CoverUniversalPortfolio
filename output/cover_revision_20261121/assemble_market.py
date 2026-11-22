@@ -87,6 +87,43 @@ def assemble_benchmarks():
     return stats
 
 
+def half_prior_comparisons(weight_cache=None):
+    """Compare three prior-independent strategy tapes to half-prior Cover."""
+    if weight_cache is None:
+        weight_cache = CACHE
+
+    alpha = 0.5
+    strategies = (('Soft-Bayes', 0), ('VB-FTRL', 0), (UP, 724191))
+    daily_rows, summaries = [], []
+
+    for name in CLASSIC:
+        x = tape(name)
+        raw = [[arb(float(v)) for v in row] for row in x]
+        norm = [sum(row) / len(row) for row in raw]
+        box = np.load(cache_path(name, alpha))['bounds']
+        ref = np.load(CACHE / f'{name}_{alpha:g}_ref.npz')
+        r = ref['pooled']
+        spread = np.max(abs(ref['logs'] - r), axis=0)
+
+        for strategy, seed in strategies:
+            f = weight_cache / f'w_{name}_1_{strategy}_{seed}.npz'
+            path, summary, _ = one_gap(name, alpha, f, raw, norm, box, r,
+                                       spread, x, tape_alpha=1)
+            path['v_lo'] = np.nextafter(box[:, 1] - path.delta_hi, -np.inf)
+            path['v_hi'] = np.nextafter(box[:, 0] - path.delta_lo, np.inf)
+            key = f'g_w_{name}_{alpha:g}_{strategy}_{seed}.npz'
+            played = np.load(CACHE / key)['v']
+            assert played.shape == (len(x),)
+            assert ((path.v_lo <= played) & (played <= path.v_hi)).all()
+            daily_rows.append(path)
+            summaries.append(summary)
+
+    path = OUT / 'bench_half_prior_gaps.csv'
+    pd.concat(daily_rows).to_csv(path, index=False)
+    pd.DataFrame(summaries).to_csv(OUT / 'bench_half_prior_summary.csv',
+                                   index=False)
+
+
 def published_audit(stats):
     original = read('up_audit.csv')
     audits = original[original.method != 'OLPS-UP'].to_dict('records')

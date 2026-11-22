@@ -103,7 +103,8 @@ def wealth_plot():
             seed = 74081 if strategy == 'sample_1000' else 0
             key = f'g_w_{name}_1_{strategy}_{seed}.npz'
             v = np.load(CACHE / key)['v']
-            label = {'first_order': 'First order', 'sample_1000': 'Sampled UP'}
+            label = {'first_order': 'First order', 'sample_1000': 'Sampled UP',
+                     'UCRP': r'$1/N$'}
             ax.plot(t, 100 * np.exp(v - ref), style, color=color, lw=.8,
                     label=label.get(strategy, strategy))
         ax.set_title(NAMES[name], fontsize=10)

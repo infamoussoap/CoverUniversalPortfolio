@@ -1,4 +1,4 @@
-"""Measure terminal Cover enclosures on nested exact-row sets in FinOL NYSE."""
+"""Compare the empty and five nested exact-row sets at the terminal close."""
 
 import csv
 from time import perf_counter
@@ -8,79 +8,136 @@ from flint import arb, ctx
 from threadpoolctl import threadpool_limits
 
 from extra_checks import OUT, ends
+from finol_product_moments import product_endpoints, validate_moments
 from particle_universal.tilted_interval_cover import TiltedCover
-from study import DATA
+from study import CLASSIC, DATA, tape
 
 
-def run():
-    panel = np.load(DATA / 'finol_nyse.npz')
-    x = panel['returns']
+def lowest_rows(x):
+    """Certify the five lowest row minima after cross-sectional scaling.
+
+    Parameters
+    ----------
+    x : (T, d) np.ndarray
+        Daily gross returns for T closes and d assets.
+
+    Returns
+    -------
+    indices : (5,) np.ndarray
+        Zero-based row indices in increasing order of normalized minimum.
+    """
     d = x.shape[1]
     approx = x.min(axis=1) / x.mean(axis=1)
     order = np.argsort(approx, kind='stable')
-    chosen = list(order[:5])
-    # Verify the sorting certificate, including the sixth-smallest cutoff.
+
     def exact_minimum(t):
         row = [arb(float(v)) for v in x[t]]
         return min(row) * d / sum(row)
 
     ordered = [exact_minimum(t) for t in order[:6]]
-    assert all(z < y for z, y in zip(ordered, ordered[1:]))
-    assert all(ordered[-1] < exact_minimum(t) for t in order[6:])
+    if not all(a < b for a, b in zip(ordered, ordered[1:])):
+        raise ArithmeticError('Rounded inputs did not separate the six minima')
+    if not all(ordered[-1] < exact_minimum(t) for t in order[6:]):
+        raise ArithmeticError('Sixth row is not an isolated cutoff')
 
-    start = perf_counter()
-    weights = np.ones(d)
-    mon = TiltedCover(d, exact_pairs=True)
+    return order[:5]
+
+
+def terminal_sets(name, control_output=None):
+    """Enclose terminal evidence with up to five extreme rows held exact.
+
+    Parameters
+    ----------
+    name : str
+        Market identifier accepted by study.tape.
+    control_output : pathlib.Path or None
+        Optional destination for the empty-set cubic-bound ablation.
+
+    Returns
+    -------
+    records : list of dict
+        Six terminal enclosures ordered by the number of exact rows.
+    """
+    x = tape(name)
+    n, d = x.shape
+    chosen = lowest_rows(x)
+    dates, assets = [''] * n, [str(i + 1) for i in range(d)]
+    if name == 'finol_nyse':
+        with np.load(DATA / 'finol_nyse.npz') as data:
+            dates, assets = data['dates'], data['tickers']
+
+    monitor = TiltedCover(d, exact_pairs=True)
+    w = np.ones(d)
+    omitted = set(chosen)
     for t, row in enumerate(x):
-        if t not in chosen:
-            mon.update(row, weights)
+        if t not in omitted:
+            monitor.update(row, w)
 
-    print('Complement accumulated', perf_counter() - start, flush=True)
-    from finol_product_moments import product_endpoints, validate_moments
-    validate_moments()
-    out = OUT / 'finol_nyse_exact_sets.csv'
     records = []
-
-    for k in range(5, 0, -1):
+    for k in range(5, -1, -1):
         active = chosen[:k]
         start = perf_counter()
-        lo, hi = product_endpoints(mon, x[active])
-        a, b = ends(lo, hi)
-        row = dict(dataset='finol_nyse', d=d, T=len(x), S_size=k,
-                   exact_days='|'.join(str(t + 1) for t in active),
-                   dates='|'.join(str(panel['dates'][t]) for t in active),
-                   weakest_assets='|'.join(str(panel['tickers'][x[t].argmin()])
-                                           for t in active),
-                   z_lo=a, z_hi=b, width=ends(lo, hi - lo)[1],
-                   checkpoint_seconds=perf_counter() - start, bits=ctx.prec)
-        records.append(row)
-        print(k, a, b, row['width'], row['checkpoint_seconds'], flush=True)
-        with out.open('w', newline='') as handle:
-            writer = csv.DictWriter(handle, fieldnames=row)
-            writer.writeheader()
-            writer.writerows(reversed(records))
-
-        mon.update(x[active[-1]], weights)
-
-    assert abs(records[-1]['width'] - 2.832528830814004) < 1e-10
-
-    controls = []
-    for method in ('default', 'matched'):
-        start = perf_counter()
-        if method == 'default':
-            lo, hi = mon.evidence()
+        if k:
+            lo, hi = product_endpoints(monitor, x[active])
+        elif control_output is None:
+            lo, hi = monitor.evidence()
         else:
-            lo, hi = product_endpoints(mon, [])
+            previous = []
+            lo, hi = monitor.evidence(
+                legacy_bounds=lambda a, b: previous.extend((a, b)))
+            controls = []
+            for method, a, b in [('without_cubic_bound', *previous),
+                                  ('default', lo, hi)]:
+                lower, upper = ends(a, b)
+                controls.append(dict(dataset=name, S_size=0, method=method,
+                                     z_lo=lower, z_hi=upper,
+                                     width=ends(a, b - a)[1]))
+            save(controls, control_output)
+        lower, upper = ends(lo, hi)
+        weakest = [assets[x[t].argmin()] for t in active]
 
-        a, b = ends(lo, hi)
-        controls.append(dict(dataset='finol_nyse', S_size=0, method=method,
-                             z_lo=a, z_hi=b, width=ends(lo, hi - lo)[1],
-                             checkpoint_seconds=perf_counter() - start))
+        records.append(dict(
+            dataset=name, d=d, T=n, S_size=k,
+            exact_days='|'.join(str(t + 1) for t in active),
+            dates='|'.join(str(dates[t]) for t in active),
+            weakest_assets='|'.join(map(str, weakest)),
+            z_lo=lower, z_hi=upper, width=ends(lo, hi - lo)[1],
+            checkpoint_seconds=perf_counter() - start, bits=ctx.prec))
+        if k:
+            monitor.update(x[active[-1]], w)
 
-    with (OUT / 'finol_nyse_empty_set_control.csv').open('w', newline='') as f:
-        writer = csv.DictWriter(f, fieldnames=controls[0])
+    # S=0 and S=1..5 all enclose the same normalized evidence.
+    low = max(r['z_lo'] for r in records)
+    high = min(r['z_hi'] for r in records)
+    if not low <= high:
+        raise ArithmeticError(f'Disjoint enclosures on {name}')
+
+    return list(reversed(records))
+
+
+def save(records, path):
+    temp = path.with_suffix('.part')
+    with temp.open('w', newline='') as handle:
+        writer = csv.DictWriter(handle, fieldnames=records[0])
         writer.writeheader()
-        writer.writerows(controls)
+        writer.writerows(records)
+    temp.replace(path)
+
+
+def run():
+    validate_moments()
+    records = []
+    for name in (*CLASSIC, 'finol_nyse'):
+        control = None
+        if name == 'finol_nyse':
+            control = OUT / 'finol_nyse_empty_set_control.csv'
+        rows = terminal_sets(name, control_output=control)
+        print(name, [r['width'] for r in rows], flush=True)
+        records.extend(rows)
+        if name == 'finol_nyse':
+            save(rows[1:], OUT / 'finol_nyse_exact_sets.csv')
+
+    save(records, OUT / 'exact_sets_all.csv')
 
 
 if __name__ == '__main__':

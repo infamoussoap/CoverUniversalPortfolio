@@ -39,7 +39,9 @@ def prepare_cache():
                          + '. See docs/inference.md for data preparation.')
 
     digests = {p.name: sha256(p.read_bytes()).hexdigest() for p in sources}
-    signature = json.dumps(digests, sort_keys=True)
+    # Evidence endpoints, candidate days and verdicts depend on the monitor.
+    version = {'inputs': digests, 'certificate': 'cubic-pair-abs-v1'}
+    signature = json.dumps(version, sort_keys=True)
     run_id = sha256(signature.encode()).hexdigest()
     cache = HERE / 'cache' / run_id
     cache.mkdir(parents=True, exist_ok=True)

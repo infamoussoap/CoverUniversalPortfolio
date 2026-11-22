@@ -45,7 +45,7 @@ def run(rounds):
     long = quadrature(steps, float(edge), 192)
     reference_error = float(np.max(np.abs(short - long)))
 
-    monitor = TiltedCover(5)
+    monitor = TiltedCover(5, exact_pairs=False)
     weights = linear_cover(returns)
     threshold = arb(1) / 100
     first_open = first_breach = first_certified_breach = None

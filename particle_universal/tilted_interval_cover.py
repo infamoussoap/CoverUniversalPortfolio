@@ -87,12 +87,12 @@ class TiltedCover:
         A quadratic upper bound H>=D and Minkowski supply the square term.
         The prior is symmetric Dirichlet with positive concentration alpha.
         With exact_pairs=True, raised Dirichlet moments sharpen the terms
-        in Q and the quartic remainder, and a second bound on the square
-        term uses the second exponential moment. Rational inputs specify
+        in Q, the absolute cubic bound C and the quartic remainder. The square
+        term also uses the second exponential moment. Rational inputs specify
         alpha exactly, including binary64 values.
     """
 
-    def __init__(self, dimension, alpha=1, exact_pairs=False):
+    def __init__(self, dimension, alpha=1, exact_pairs=True):
         self.d = dimension
         self.alpha = alpha_parameter(exact_alpha(alpha))
         total = dimension * self.alpha
@@ -164,7 +164,9 @@ class TiltedCover:
                      + 24 * alpha * dot(gp[2], self.J_diag))
         return raw_third / m[3], raw_fourth / m[4], raw_fifth / m[5]
 
-    def evidence(self, *, mgf_bounds=None, pair_series=None):
+    def evidence(self, *, mgf_bounds=None, pair_series=None,
+                 legacy_bounds=None):
+        """Enclose log evidence, optionally reporting the unclipped control."""
         m = self.rising
         alpha = self.alpha
         g = self.g
@@ -203,8 +205,26 @@ class TiltedCover:
             k_high = min(k_high, k.upper())
             b_high = min(b_high, (mgf2_high.sqrt() * self.H4_root**2).upper())
 
-        a_low = max(arb(0), (q_low - (cubic + deviation) / 3).lower())
-        a_high = nonnegative_upper(q_high - (cubic - deviation) / 3 + k_high)
+            c_high = dot(moments, self.C.entries()).upper()
+        else:
+            # Taylor bound for I(C) when pair moments are not requested.
+            c_high = (sum(absolute[:4])
+                      + factors[2] * factorial(4) * absolute[4]).upper()
+
+        # Intersect after mapping both cubic bounds into curvature bounds.
+        # This also preserves the original outward rounding when it is tighter.
+        base_low = max(arb(0), (q_low - (cubic + deviation) / 3).lower())
+        base_high = nonnegative_upper(q_high - (cubic - deviation) / 3
+                                      + k_high)
+
+        if legacy_bounds is not None:
+            upper = min(mgf_high, (mgf_high - base_low + b_high / 2).upper())
+            lower = (mgf_low.log() - base_high / mgf_low).lower()
+            legacy_bounds(lower, upper.log().upper())
+
+        a_low = max(base_low, (q_low - c_high / 3).lower())
+        a_high = min(base_high, nonnegative_upper(q_high + c_high / 3
+                                                  + k_high))
         mass_upper = min(mgf_high, (mgf_high - a_low + b_high / 2).upper())
         log_lower = (mgf_low.log() - a_high / mgf_low).lower()
         return log_lower, mass_upper.log().upper()

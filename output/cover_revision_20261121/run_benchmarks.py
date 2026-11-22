@@ -113,7 +113,8 @@ def matlab():
 def tables():
     import matplotlib.pyplot as plt
 
-    from assemble_market import assemble_benchmarks, published_audit
+    from assemble_market import assemble_benchmarks, half_prior_comparisons
+    from assemble_market import published_audit
     from report_tables import table_c, table_d, wealth_plot
     from verify_exports import verify_gaps
 
@@ -124,7 +125,8 @@ def tables():
     table_d(audit)
     wealth_plot()
     verify_gaps()
-    print('Verified market wealth and all 306 strategy histories.')
+    half_prior_comparisons()
+    print('Verified 306 benchmark histories and 18 half-prior comparisons.')
 
 
 def scaling():

@@ -69,7 +69,7 @@ def check_inputs(names):
     CACHE.mkdir(exist_ok=True)
     for name in names:
         x = tape(name)
-        fingerprint = hashlib.sha256()
+        fingerprint = hashlib.sha256(b"cubic-intersection-v1\0")
         fields = [x]
         if name in ('stocks', 'pair'):
             panel = load_panel('full')
@@ -101,7 +101,7 @@ def check_inputs(names):
                 continue
 
         raise RuntimeError(
-            f'Inputs for {name} differ from the saved checkpoints, or the '
+            f'Inputs or certificate version for {name} differ, or the '
             'checkpoints have no input signature. Move the benchmark cache '
             'directory aside before running on a new vintage: ' + str(CACHE))
 

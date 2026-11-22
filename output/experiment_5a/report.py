@@ -165,7 +165,7 @@ def power_report():
     return df
 
 
-def figures(power):
+def evalue_figure():
     plt.rcParams.update({'text.usetex':True,'font.size':10,
                          'axes.spines.top':False,'axes.spines.right':False})
     df = pd.read_csv(ROOT/'5a_paths.csv')
@@ -174,8 +174,10 @@ def figures(power):
     for name,color in zip([NAMES[0],'NYSE(O)','NYSE(N)'],
                           ['#161616','#32739b','#ad6334']):
         group = df.loc[df.market==name]
-        for axis in (ax,bx):
-            axis.plot(group.t,np.exp(group.z_lo),lw=.9,color=color,label=name)
+        label = 'Sector panel' if name == NAMES[0] else name
+        for axis in (ax, bx):
+            axis.plot(group.t, np.exp(group.z_lo), lw=.9, color=color,
+                      label=label)
     ax.axhline(20,color='0.45',ls='--',lw=.8)
     ax.text(.99,.97,'Rejection threshold: 20',transform=ax.transAxes,
             va='top',ha='right')
@@ -187,6 +189,10 @@ def figures(power):
     bx.legend(frameon=False,fontsize=9,ncol=3)
     fig.savefig(ROOT/'figure_A.pdf')
     plt.close(fig)
+
+
+def figures(power):
+    evalue_figure()
 
     fig,ax = plt.subplots(figsize=(6.3,3.55),layout='constrained')
     obs = power[power.horizon==6791]

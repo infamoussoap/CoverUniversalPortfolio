@@ -62,7 +62,8 @@ def summarize(data):
             row.update(q25=q[0], median=q[1], q75=q[2],
                        n_significant=frame.significant.sum(),
                        pct_significant=100 * frame.significant.mean(),
-                       median_VR=frame.VR_T.median())
+                       median_VR=frame.VR_T.median(),
+                       max_e_lo=frame.max_e_lo.max())
             rows.append(row)
 
     summary = pd.DataFrame(rows)

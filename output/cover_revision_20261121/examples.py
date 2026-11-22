@@ -127,7 +127,8 @@ def decompose():
         box = np.load(cache_path(name, 1))
         row = dict(zip(('jensen', 'remainder', 'upper1', 'upper2', 'upper3'),
                        1e6 * mean))
-        row.update(path=name, implemented_width=1e6 * float(mass.mid()),
+        width = outward_float((1e6 * mass).upper(), True)
+        row.update(path=name, implemented_width=width,
                    max_rel_dev=spread, score_range=np.ptp(g),
                    pair_degree=box['degrees'][-1])
         rows.append(row)

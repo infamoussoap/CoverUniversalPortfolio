@@ -20,7 +20,7 @@ dependencies and where each result appears in the paper.
 | `matlab` | Six OLPS matrices, MATLAB, pinned OLPS checkout at `vendor/OLPS` | Three native replays per dataset for Table 4. Set `PAPER_OLPS_ROOT` to use another copy of the pinned checkout. |
 | `tables` | `markets` and `matlab` | Table 3, Table 4, Figure 3, MATLAB payoff verification and the published-source audit |
 | `scaling` | FinOL and OLPS matrices | Table 5 and Figure 4. Running after `markets` also records the isolated timing measurements in Table 2. |
-| `sensitivity` | FinOL and OLPS matrices | Terminal comparisons with extreme rows integrated exactly, including the matched no-exact-row control |
+| `sensitivity` | FinOL and OLPS matrices | Terminal intervals with zero through five exact rows on the classic markets and FinOL NYSE(N), plus the FinOL control with the cubic intersection disabled |
 
 ### Numerical conventions
 
@@ -55,11 +55,11 @@ the results are deterministic for the fixed tapes and software versions.
 | `bench_gaps.csv`, `bench_summary.csv`, `tableC.csv`, `tableC_seed_ranges.csv`, `bench_wealth.pdf` | Per-close gaps, terminal comparisons, seed ranges, verdicts and Figure 3 |
 | `matlab_replay.csv`, `up_audit.csv`, `tableD.csv`, `payoff_checks.csv` | Native toolbox and independent wealth replays, published wealths and verification |
 | `bench_cost.csv`, `bench_alloc_time.csv`, `bench_cost_trials.csv`, `bench_cost_slopes.csv`, `bench_scaling.pdf` | Median times, individual trials, memory, log–log slopes and Figure 4 |
-| `exact_row_width.csv`, `finol_nyse_exact_sets.csv`, `finol_nyse_empty_set_control.csv` | One-row diagnostic, nested exact rows, and the matched empty-set control |
+| `exact_row_width.csv`, `exact_sets_all.csv`, `finol_nyse_exact_sets.csv`, `finol_nyse_empty_set_control.csv` | One-row diagnostic, all 42 nested exact-row cases, the five FinOL exact sets, and the cubic-bound ablation with all rows in the expansion |
 
 Timing trials for scaling use fresh single-threaded Python processes and
 retain peak resident memory in MiB. The paper's full 403-stock, 6,430-day
-path took about 42 minutes per timing trial on an M1 Pro. A complete run
+path took about 48 minutes per timing trial on an M1 Pro. A complete run
 takes hours and repeats timed calculations three times. Performance varies
 with hardware, BLAS and MATLAB. Intermediate files are saved by market,
 seed and repetition in `output/cover_revision_20261121/cache/`. Restart

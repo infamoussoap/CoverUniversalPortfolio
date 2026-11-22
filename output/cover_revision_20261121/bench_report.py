@@ -29,14 +29,17 @@ def audit_row(name, source, value, lo, hi, prior, method, **kwargs):
                 **kwargs)
 
 
-def one_gap(name, alpha, f, raw, norm, box, ref, spread, x):
+def one_gap(name, alpha, f, raw, norm, box, ref, spread, x, tape_alpha=None):
     with np.load(f) as data:
         w = data['w']
         secs = data['times']
 
-    prefix = f'w_{name}_{alpha:g}_'
+    source_alpha = alpha if tape_alpha is None else tape_alpha
+    prefix = f'w_{name}_{source_alpha:g}_'
+    if not f.stem.startswith(prefix):
+        raise ValueError(f'Unexpected strategy tape {f.name}')
     strategy, seed = f.stem[len(prefix):].rsplit('_', 1)
-    cache = CACHE / ('g_' + f.stem + '.npz')
+    cache = CACHE / f'g_w_{name}_{alpha:g}_{strategy}_{seed}.npz'
     if cache.exists():
         with np.load(cache) as data:
             gaps, v, wealth = (data[k] for k in ('gaps', 'v', 'wealth'))
