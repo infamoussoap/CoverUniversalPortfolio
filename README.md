@@ -1,5 +1,7 @@
 # Certified Approximation of Cover’s Universal Portfolio
 
+[Read the paper on ResearchGate](https://www.researchgate.net/publication/418210793_Certified_Approximation_of_Cover's_Universal_Portfolio)
+
 Reproduction code for the November 2026 manuscript by James Chok and Domenic
 Petzinna. Given daily asset price relatives, the code encloses the wealth of
 Cover’s continuous Dirichlet mixture in interval arithmetic. One such
