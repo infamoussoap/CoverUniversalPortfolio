@@ -1,4 +1,4 @@
-"""Reproduce the five-stock alternating market in Appendix C.2."""
+"""Reproduce the five-stock alternating market in Appendix C."""
 
 import argparse
 import json

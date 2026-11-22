@@ -335,6 +335,12 @@ positive payoff.
 \section{Certifying the wealth of a portfolio}
 \label{sec:certificate}
 
+Once a strategy's allocations and the market returns are known, its
+wealth can be computed directly. The difficulty in measuring its error
+relative to Cover therefore lies in evaluating $Z_t$, and a single
+enclosure of this integral suffices for every strategy compared on the
+same market under the same prior.
+
 \subsection{The certified error interval}
 
 At a given close $t$, let $\bar x_s=\one^\top x_s/d$ and
@@ -541,7 +547,7 @@ $e^{-\E_\nu D}-e^{-\E_\nu(D_3+K)}$, while the three upper gaps use
 $A=\widehat H$. For the numerical moments in the first five columns,
 two quadrature orders agree within $8.2\times10^{-13}$ in relative terms
 on the pair, and the largest single-net deviation from the mean is 3.0\%
-on the 50 stocks (Appendix~\ref{app:refs}). The last column gives the
+on the 50 stocks (Appendix~\ref{app:equity-protocol}). The last column gives the
 implemented width, rounded up. For AAPL--MSFT,
 $\bar Z_T/\Phi_S=\E_\nu e^{-D}\simeq0.83220$, so multiplying the width
 relative to Cover in Figure~\ref{fig:aapl} by this factor gives the width
@@ -641,7 +647,7 @@ without imputing missing prices, although it favors surviving stocks.
 
 On this panel, an initial \$100 invested in Cover grew to an estimated
 \$1,771.00. The pooled estimate from eight independently scrambled Sobol
-nets (Appendix~\ref{app:refs}) lay inside the band on all 6,539 closes,
+nets (Appendix~\ref{app:equity-protocol}) lay inside the band on all 6,539 closes,
 and the largest deviation of a single-net estimate from the pooled
 reference was $1.52\times10^{-7}$ log units. At the final close the band
 extended from 0.0086\% below the estimate to 0.0497\% above it, and
@@ -672,16 +678,18 @@ of payoffs around their equal-weight value.
 \FloatBarrier
 \section{A certified benchmark for online portfolio selection}\label{sec:bench}
 
-\subsection{Data and strategies}
-Table~\ref{tab:bench-accuracy} gives the dimensions and dates of the six
-daily return matrices distributed with the OLPS toolbox \citep{li2016olps}.
-We use the published price relatives as supplied, including the five rows
-with an entry outside $[0.5,2]$. Since all entries are positive, we take
+On six standard portfolio benchmarks, we use the certified interval both
+to measure how closely competing strategies tracked Cover and to check
+the wealth attributed to Cover in earlier studies. The six markets come
+from the OLPS toolbox \citep{li2016olps}, with their dimensions and dates
+given in Table~\ref{tab:bench-accuracy}. We use the published price relatives
+as supplied, including the five rows with an entry outside $[0.5,2]$.
+Since all entries are positive, we take
 $S=\emptyset$ by default. For the scaling experiment we also use FinOL
 NYSE(N) and FinOL SP500 \citep{finol}.
 
-To assess how closely the strategies track Cover under the uniform prior,
-we compare the first-order rule~\eqref{eq:first-order}, sampled UP
+Under the uniform prior, we compare Cover with the first-order
+rule~\eqref{eq:first-order}, sampled UP
 \citep{blumkalai1999}, Soft-Bayes \citep{orseau2017} and VB-FTRL
 \citep{jezequel2026}. For sampled UP we draw $M$ fixed portfolios from
 the prior and weight them by their realized wealth, repeating the
@@ -695,7 +703,7 @@ All strategies start at 1/N and trade without costs. We also compare
 Cover with 1/N itself, whose normalized log wealth is zero, so that the
 evidence interval directly encloses the gap. For an independent estimate
 of Cover's wealth we use the same Sobol quadrature as on the 50-stock
-panel (Appendix~\ref{app:refs}).
+panel (Appendix~\ref{app:equity-protocol}).
 
 \subsection{Accuracy of the certificate}
 To compare the size of the certificate with the error it bounds, let
@@ -977,11 +985,14 @@ datasets.
 \section{Is Cover's lead over equal weighting real?}
 \label{sec:test}
 
-\subsection{A certified anytime-valid test}
 Even when 1/N is growth-optimal, Cover can accumulate more wealth
 over a particular period. We therefore ask how large this lead must be
-to provide evidence against conditional growth optimality. Let
-$r_{s,i}=x_{s,i}/\bar x_s$, and let $\mathcal F_s$ contain the
+to provide evidence against conditional growth optimality. Since we
+observe the wealth ratio at every close, the test must remain valid
+when the investor chooses when to stop.
+
+\subsection{A certified anytime-valid test}
+Let $r_{s,i}=x_{s,i}/\bar x_s$, and let $\mathcal F_s$ contain the
 information available at close $s$. We test the hypothesis
 \begin{equation}\label{eq:h0}
  H_0:\qquad \E[r_{s,i}\mid\mathcal F_{s-1}]=1
@@ -1238,8 +1249,9 @@ returns alternate between 1.20 and 0.80 in opposite order for 12,600
 sessions, with the other three stocks flat. Although the score returns to
 zero after each pair of sessions, the tilted interval first became
 inconclusive at tolerance 0.01 on day 56 and continued to intersect the
-tolerance band thereafter. Direct integration places the first breach on
-day 78 (Appendix~\ref{app:paired-replay}).
+tolerance band thereafter. The alternating-market calculation in
+Appendix~\ref{app:equity-protocol} places the first breach on day 78
+by direct integration.
 
 For the test of growth optimality, a separate question is how much wealth
 the underlying mixture can accumulate against equal weighting. In the
@@ -1510,8 +1522,6 @@ storage and arithmetic per session.
 \label{app:equity-protocol}
 \small
 
-\subsection{Reference integrals}\label{app:refs}
-
 For the 50-stock panel and the six OLPS markets, we estimated Cover's
 wealth using eight independently scrambled Sobol nets of $2^{16}$ points
 each. We integrated a degree-four control polynomial analytically and
@@ -1520,11 +1530,9 @@ For the width decomposition in Table~\ref{tab:curvature-slack}, we instead
 estimated the tilted moments by reweighting eight nets by $e^G$ on the
 50-stock panel and by direct Gauss--Legendre quadrature on AAPL--MSFT.
 
-\subsection{Exact check on the five-stock alternating market}
-\label{app:paired-replay}
-
-Consider the five-stock alternating market in the Discussion, and let
-$\delta$ denote the first stock's gain above one on the opening day.
+\paragraph{Five-stock alternating market.}
+Let $\delta$ denote the first stock's gain above one on the opening day
+of the alternating market described in the Discussion.
 Under the uniform prior, $U=|W_1-W_2|\sim\operatorname{Beta}(1,d-1)$
 with $d=5$, and each successive pair of days multiplies the wealth of
 a fixed portfolio by $1-\delta^2 U^2$. Exchanging the first two stocks

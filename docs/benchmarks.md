@@ -16,7 +16,7 @@ dependencies and where each result appears in the paper.
 | Stage | Required inputs and earlier stages | Manuscript outputs |
 | --- | --- | --- |
 | `examples` | 50-stock Yahoo panel, including AAPL and MSFT | Table 1, Figures 1 and 2, all daily reference and evidence values |
-| `markets` | Six OLPS matrices | Table 2, strategy tapes for Tables 3 and 4, and the six hindsight regret intervals in §4.6 |
+| `markets` | Six OLPS matrices | Table 2, strategy tapes for Tables 3 and 4, and the six hindsight regret intervals in §4.5 |
 | `matlab` | Six OLPS matrices, MATLAB, pinned OLPS checkout at `vendor/OLPS` | Three native replays per dataset for Table 4. Set `PAPER_OLPS_ROOT` to use another copy of the pinned checkout. |
 | `tables` | `markets` and `matlab` | Table 3, Table 4, Figure 3, MATLAB payoff verification and the published-source audit |
 | `scaling` | FinOL and OLPS matrices | Table 5 and Figure 4. Running after `markets` also records the isolated timing measurements in Table 2. |

@@ -69,7 +69,7 @@ measurements. Data preparation and the full run can be split by stage.
 | §3.5, Table 1, Figures 1–2 | `python output/cover_revision_20261121/run_benchmarks.py examples` | `table1_width.csv`, `aapl_msft_pair_series.pdf`, `fig2_50stock.pdf` |
 | §4, Tables 2–5, Figures 3–4, regret and extreme-day checks | `python reproduce.py benchmark` | `tableB.csv`, `tableC.csv`, `tableD.csv`, `bench_cost.csv`, `bench_wealth.pdf`, `bench_scaling.pdf`, `exact_sets_all.csv`, `finol_nyse_exact_sets.csv`, `finol_nyse_empty_set_control.csv` |
 | §5, Tables 6–7, Figures 5–6, calibration and planted advantage | `python reproduce.py inference` | `5a_summary.csv`, `5a_subset_summary.csv`, `figure_A.pdf`, `figure_C.pdf`, `5a_null_summary.csv`, `5a_power_summary.csv` |
-| Appendix C.2, alternating market, 12,600 closes | `python reproduce.py appendix` | `output/appendix/alternating.json` |
+| Appendix C, alternating market, 12,600 closes | `python reproduce.py appendix` | `output/appendix/alternating.json` |
 
 The benchmark also writes `bench_half_prior_gaps.csv` and `bench_half_prior_summary.csv` for Soft-Bayes, VB-FTRL and the MATLAB toolbox UP on the same six tapes, using symmetric Dirichlet(½) Cover wealth as the benchmark.
 
